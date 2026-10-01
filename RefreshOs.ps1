@@ -176,6 +176,7 @@ else {
     Add-LogEntry -Message "No Driver Updates found."
 }
 
+# check if there are any updates
 if (($SwUpdates.Count -eq 0) -and ($DrvUpdates.Count -eq 0)) {
     Add-LogEntry -Message "No Updates found at all. Exit."
     Exit 0
