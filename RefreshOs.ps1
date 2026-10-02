@@ -274,8 +274,10 @@ if ($script:RebootRequired) {
     if ($AutoReboot) {
         Add-LogEntry -Message "A Reboot is required and will be done automatically in $AutoRebootDelayInSeconds seconds..."
 
-        & "$($env:windir)\system32\shutdown.exe" /r /f /t $AutoRebootDelayInSeconds /d P:2:3 E /c "$($Script:Name): Rebooting to complete the installation of Windows and/or Drivers Updates."
+        & "$($env:windir)\system32\shutdown.exe" /r /f /t $AutoRebootDelayInSeconds /d P:2:3 /c "$($Script:Name): Rebooting to complete the installation of Updates."
         Exit 0
+    } else {
+        Add-LogEntry -Message "A Reboot is required but was not forced."
     }
 }    
 else {
