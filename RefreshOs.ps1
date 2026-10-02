@@ -1,3 +1,6 @@
+#requires -Version 5.1
+#requires -RunAsAdministrator
+
 <#
 .SYNOPSIS
     RefreshOs
@@ -13,6 +16,14 @@ param(
     [int] $AutoRebootDelayInSeconds = 20
 )
 
+# check admin rights
+function Test-IsElevated {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+# write log text to console and file
 function Add-LogEntry {
     param([string]$Message)
 
@@ -22,6 +33,7 @@ function Add-LogEntry {
     Add-Content -Path $Script:LogFile -Value $M -Encoding utf8
 }
 
+# download and install a single update
 function Invoke-DownloadAndInstall {
     param($Update)
 
@@ -41,11 +53,16 @@ function Invoke-DownloadAndInstall {
     
     Add-LogEntry -Message "  Installing update: $($Update.Title)"
     $Result = $WuInstaller.Install()
-    Add-LogEntry -Message "    Install result: $($Results.ResultCode) ($($Results.HResult))"
+    Add-LogEntry -Message "    Install result: $($Result.ResultCode) ($($Result.HResult))"
 
     if ($Result.RebootRequired) {
         $script:RebootRequired = $true
     }
+}
+
+# check admin
+if (-not (Test-IsElevated)) {
+    throw 'Admin Rights required.'
 }
 
 # script version
@@ -234,7 +251,7 @@ foreach ($UpdateType in $UpdateTypes) {
 # }
 
 # check if there are any updates
-$TotalUpdateCount = Measure-Object -InputObject $UpdateTypes.Updates -Property Count
+$TotalUpdateCount = Measure-Object -InputObject ($UpdateTypes.Updates) -Property Count
 if ($null -eq $TotalUpdateCount) {
     Add-LogEntry -Message "No Updates found at all. Exit."
     Exit 0
@@ -246,7 +263,7 @@ $UpdateTypes | ForEach-Object {
         if ($_.Updates.Count -gt 0) {
             Add-LogEntry -Message "Downloading and Installing [$($_.Name)] Updates..."
             foreach ($Update in $_.Updates) {
-                Invoke-DownloadAndInstall -Update $_
+                Invoke-DownloadAndInstall -Update $Update
             }        
         }
     }
@@ -272,16 +289,15 @@ $UpdateTypes | ForEach-Object {
 
 if ($script:RebootRequired) {
     if ($AutoReboot) {
-        Add-LogEntry -Message "A Reboot is required and will be done automatically in $AutoRebootDelayInSeconds seconds..."
-
+        Add-LogEntry -Message "Reboot is required and will be done automatically in $AutoRebootDelayInSeconds seconds..."
         & "$($env:windir)\system32\shutdown.exe" /r /f /t $AutoRebootDelayInSeconds /d P:2:3 /c "$($Script:Name): Rebooting to complete the installation of Updates."
         Exit 0
     } else {
-        Add-LogEntry -Message "A Reboot is required but was not forced."
+        Add-LogEntry -Message "Reboot is required but wasn't forced. Exit."
     }
 }    
 else {
-    Add-LogEntry -Message "No Reboot required. Exit."
+    Add-LogEntry -Message "Reboot not required. Exit."
 }
 
 Exit 0
