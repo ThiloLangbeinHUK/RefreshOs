@@ -133,7 +133,7 @@ Add-LogEntry -Message "==== $($M) ===="
 $script:WuSession = New-Object -ComObject Microsoft.Update.Session
 $script:WuSession.ClientApplicationID = $Script:Name
 
-# handling the different update types
+# searching updates of different types
 foreach ($UpdateType in $UpdateTypes) {
     Add-LogEntry -Message "Getting [$($UpdateType.Name)] Updates ..."        
     try {
@@ -166,90 +166,6 @@ foreach ($UpdateType in $UpdateTypes) {
     }
 }
 
-
-# Queries
-# $SwQuery = "IsInstalled=0 and IsHidden=0 and Type='Software'"
-# $DrvQuery = "IsInstalled=0 and IsHidden=0 and Type='Driver'"
-
-# # Update Collections
-# $SwUpdates = New-Object -ComObject Microsoft.Update.UpdateColl
-# $DrvUpdates = New-Object -ComObject Microsoft.Update.UpdateColl
-
-# # software updates
-# $SwQuery | ForEach-Object {
-
-#     Add-LogEntry -Message "Getting updates: $_ ..."        
-#     try {
-#         $Searcher = $WuSession.CreateupdateSearcher()
-#         $Searcher.Online = $true
-
-#         $Searcher.Search($_).Updates | ForEach-Object {
-#             if (!$_.EulaAccepted) { $_.AcceptEula() }
-#             $featureUpdate = $_.Categories | Where-Object { $_.CategoryID -eq "3689BDC8-B205-4AF4-8D4A-A63924C5E9D5" }
-#             if ($featureUpdate) {
-#                 Add-LogEntry -Message "Skipping feature update: $($_.Title)"
-#             }
-#             elseif ($_.Title -match "Preview") { 
-#                 Add-LogEntry -Message "Skipping preview update: $($_.Title)"
-#             }
-#             else {
-#                 [void]$SwUpdates.Add($_)
-#             }
-#         }
-#     }
-#     catch {
-#         # If this script is running during specialize, error 8024004A will happen:
-#         # 8024004A	Windows Update agent operations are not available while OS setup is running.
-#         Add-LogEntry "Unable to search for updates: $_"
-#     }
-
-# }
-
-# if ($SwUpdates.Count -gt 0) {
-#     Add-LogEntry -Message "$($SwUpdates.Count) Software Updates found."
-# }
-# else {
-#     Add-LogEntry -Message "No Software Updates found."
-# }
-
-
-# # driver updates
-# $DrvQuery | ForEach-Object {
-
-#     Add-LogEntry -Message "Getting updates: $_ ..."        
-#     try {
-#         $Searcher = $WuSession.CreateupdateSearcher()
-#         $Searcher.Online = $true
-
-#         $Searcher.Search($_).Updates | ForEach-Object {
-#             if (!$_.EulaAccepted) { $_.AcceptEula() }
-#             $featureUpdate = $_.Categories | Where-Object { $_.CategoryID -eq "3689BDC8-B205-4AF4-8D4A-A63924C5E9D5" }
-#             if ($featureUpdate) {
-#                 Add-LogEntry -Message "Skipping feature update: $($_.Title)"
-#             }
-#             elseif ($_.Title -match "Preview") { 
-#                 Add-LogEntry -Message "Skipping preview update: $($_.Title)"
-#             }
-#             else {
-#                 [void]$DrvUpdates.Add($_)
-#             }
-#         }
-#     }
-#     catch {
-#         # If this script is running during specialize, error 8024004A will happen:
-#         # 8024004A	Windows Update agent operations are not available while OS setup is running.
-#         Add-LogEntry "Unable to search for updates: $_"
-#     }
-
-# }
-
-# if ($DrvUpdates.Count -gt 0) {
-#     Add-LogEntry -Message "$($DrvUpdates.Count) Driver Updates found."
-# }
-# else {
-#     Add-LogEntry -Message "No Driver Updates found."
-# }
-
 # check if there are any updates
 $TotalUpdateCount = Measure-Object -InputObject ($UpdateTypes.Updates) -Property Count
 if ($null -eq $TotalUpdateCount) {
@@ -269,24 +185,6 @@ $UpdateTypes | ForEach-Object {
     }
 }
 
-# downloading and installing software updates
-
-# if ($SwUpdates.Count -gt 0) {
-#     Add-LogEntry -Message "Downloading and Installing Software Updates..."
-#     foreach ($Update in $SwUpdates) {
-#         Invoke-DownloadAndInstall -Update $Update
-#     }
-# }
-
-# downloading and installing driver updates
-
-# if ($DrvUpdates.Count -gt 0) {
-#     Add-LogEntry -Message "Downloading and Installing Driver Updates..."
-#     foreach ($Update in $DrvUpdates) {
-#         Invoke-DownloadAndInstall -Update $Update
-#     }
-# }
-
 if ($script:RebootRequired) {
     if ($AutoReboot) {
         Add-LogEntry -Message "Reboot is required and will be done automatically in $AutoRebootDelayInSeconds seconds..."
@@ -297,7 +195,7 @@ if ($script:RebootRequired) {
     }
 }    
 else {
-    Add-LogEntry -Message "Reboot not required. Exit."
+    Add-LogEntry -Message "Reboot isn't required. Exit."
 }
 
 Exit 0
