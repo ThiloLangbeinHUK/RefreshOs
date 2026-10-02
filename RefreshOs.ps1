@@ -167,7 +167,7 @@ foreach ($UpdateType in $UpdateTypes) {
 }
 
 # check if there are any updates
-$TotalUpdateCount = Measure-Object -InputObject ($UpdateTypes.Updates) -Property Count
+$TotalUpdateCount = (Measure-Object -InputObject ($UpdateTypes.Updates)).Count
 if ($null -eq $TotalUpdateCount) {
     Add-LogEntry -Message "No Updates found at all. Exit."
     Exit 0
